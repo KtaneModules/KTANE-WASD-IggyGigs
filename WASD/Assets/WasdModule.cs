@@ -114,7 +114,7 @@ public class WasdModule : MonoBehaviour
         xCoord = (startingLocationIndex % 3) * 3;
         yCoord = (startingLocationIndex / 3) * 3;
 
-        Debug.LogFormat("[WASD #{0} The displayed location is {1} and the starting location is {2}.]", ModuleId, DisplayTexts[0].text, startingLocationIndex + 1);
+        Debug.LogFormat("[WASD #{0}] The displayed location is {1} and the starting location is {2}.", ModuleId, DisplayTexts[0].text, startingLocationIndex + 1);
     }
     void Calculation()
     {
@@ -123,8 +123,20 @@ public class WasdModule : MonoBehaviour
 
     bool checkGoal()
     {
+        // this is why you need 8 hours of sleep
+        /*
         int currentPos = (xCoord / 3) + yCoord;
         if (currentPos == generatedLocationIndex)
+            return true;
+        return false;
+        */
+
+        if (yCoord % 3 != 0 || xCoord % 3 != 0)
+            return false;
+        int goalX, goalY;
+        goalX = (generatedLocationIndex % 3) * 3;
+        goalY = (generatedLocationIndex / 3) * 3;
+        if (xCoord == goalX && yCoord == goalY)
             return true;
         return false;
     }
