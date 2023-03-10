@@ -87,7 +87,7 @@ public class WasdModule : MonoBehaviour
         }
         // COMMENT THIS OUT LATER -- this was used to display values during testing bc i dont know how to use the console :'(
         // DisplayTexts[0].text = "[" + xCoord + "," + yCoord + "] - " + Map[yCoord, xCoord];
-        Debug.LogFormat("[WASD #{0} Available button presses are: {1}. Currently at {2}, {3}.]", ModuleId, Map[yCoord, xCoord], yCoord, xCoord);
+        Debug.LogFormat("[WASD #{0}] Available button presses are: {1}. Currently at {2}, {3}.", ModuleId, Map[yCoord, xCoord], yCoord, xCoord);
 
         if (checkGoal())
         {
@@ -99,13 +99,9 @@ public class WasdModule : MonoBehaviour
     void Start()
     { //on generation
         int[] serialNums = Bomb.GetSerialNumberNumbers().ToArray();
-        startingLocationIndex = DigitalRoot(serialNums);
-        if (startingLocationIndex == 0)
+        startingLocationIndex = DigitalRoot(serialNums) - 1; //indexed as 0 to 8
+        if (startingLocationIndex < 0)
             startingLocationIndex++;
-        else if (startingLocationIndex == 1)
-            startingLocationIndex += 0;
-        else
-            startingLocationIndex--;
 
         generatedLocationIndex = Rnd.Range(0, Locations.Length);
         if (generatedLocationIndex == startingLocationIndex)
