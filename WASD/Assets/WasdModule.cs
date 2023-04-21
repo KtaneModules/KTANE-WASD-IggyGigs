@@ -153,8 +153,4 @@ public class WasdModule : MonoBehaviour
 
     }
 
-    void Update()
-    {
-
-    }
 }
