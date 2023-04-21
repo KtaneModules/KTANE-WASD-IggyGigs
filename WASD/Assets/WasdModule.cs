@@ -53,9 +53,7 @@ public class WasdModule : MonoBehaviour
 
         if (ModuleSolved)
             return;
-        {
 
-        }
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Button.transform);
         if (Button.name.Equals("wButton"))
         {
