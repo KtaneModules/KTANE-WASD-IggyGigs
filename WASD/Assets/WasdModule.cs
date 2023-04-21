@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using UnityEngine;
 using KModkit;
+using UnityEngine;
 using Rnd = UnityEngine.Random;
 
 public class WasdModule : MonoBehaviour
@@ -153,4 +153,27 @@ public class WasdModule : MonoBehaviour
 
     }
 
+#pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"Use '!{0} <W/A/S/D>' to press that button; Chain presses without spaces.";
+#pragma warning restore 414
+
+    private char[] _directions = new char[] { 'W', 'A', 'S', 'D' };
+
+    private IEnumerator ProcessTwitchCommand(string command) {
+        command = command.Trim().ToUpper();
+
+        if (command.Any(letter => !_directions.Contains(letter))) {
+            yield return "sendtochaterror Invalid command!";
+        }
+        yield return null;
+
+        foreach (char letter in command) {
+            Buttons[Array.IndexOf(_directions, letter)].OnInteract();
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+
+    private IEnumerator TwitchHandleForcedSolve() {
+        yield return null;
+    }
 }
