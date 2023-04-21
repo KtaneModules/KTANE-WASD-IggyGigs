@@ -105,7 +105,8 @@ public class WasdModule : MonoBehaviour
         if (generatedLocationIndex == startingLocationIndex)
         {
             int seed = Rnd.Range(-3, 4);
-            generatedLocationIndex += seed;
+            generatedLocationIndex += 9 + seed;
+            generatedLocationIndex %= 9;
         }
         DisplayTexts[0].text = Locations[generatedLocationIndex]; //random location
 
@@ -168,6 +169,10 @@ public class WasdModule : MonoBehaviour
     }
 
     private IEnumerator TwitchHandleForcedSolve() {
-        yield return null;
+        return ProcessTwitchCommand(GenerateSolution());
+    }
+
+    private string GenerateSolution() {
+        return string.Empty;
     }
 }
