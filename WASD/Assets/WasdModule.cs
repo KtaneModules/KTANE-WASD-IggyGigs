@@ -114,10 +114,6 @@ public class WasdModule : MonoBehaviour
 
         Debug.LogFormat("[WASD #{0}] The displayed location is {1} and the starting location is {2}.", ModuleId, DisplayTexts[0].text, startingLocationIndex + 1);
     }
-    void Calculation()
-    {
-
-    }
 
     bool checkGoal()
     {
