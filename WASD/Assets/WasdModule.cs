@@ -29,6 +29,7 @@ public class WasdModule : MonoBehaviour
                                      { "W", "D", "WAD", "A", "WD", "AD", "WA" } };
 
     int xCoord, yCoord;
+    int goalX, goalY;
 
     static int ModuleIdCounter = 1;
     int ModuleId;
@@ -104,14 +105,15 @@ public class WasdModule : MonoBehaviour
         generatedLocationIndex = Rnd.Range(0, Locations.Length);
         if (generatedLocationIndex == startingLocationIndex)
         {
-            int seed = Rnd.Range(-3, 4);
-            generatedLocationIndex += 9 + seed;
+            generatedLocationIndex += Rnd.Range(1, 9);
             generatedLocationIndex %= 9;
         }
         DisplayTexts[0].text = Locations[generatedLocationIndex]; //random location
 
         xCoord = (startingLocationIndex % 3) * 3;
         yCoord = (startingLocationIndex / 3) * 3;
+        goalX = (generatedLocationIndex % 3) * 3;
+        goalY = (generatedLocationIndex / 3) * 3;
 
         Debug.LogFormat("[WASD #{0}] The displayed location is {1} and the starting location is {2}.", ModuleId, DisplayTexts[0].text, startingLocationIndex + 1);
     }
@@ -128,9 +130,6 @@ public class WasdModule : MonoBehaviour
 
         if (yCoord % 3 != 0 || xCoord % 3 != 0)
             return false;
-        int goalX, goalY;
-        goalX = (generatedLocationIndex % 3) * 3;
-        goalY = (generatedLocationIndex / 3) * 3;
         if (xCoord == goalX && yCoord == goalY)
             return true;
         return false;
@@ -169,10 +168,66 @@ public class WasdModule : MonoBehaviour
     }
 
     private IEnumerator TwitchHandleForcedSolve() {
-        return ProcessTwitchCommand(GenerateSolution());
-    }
+        string pathDirections = string.Empty;
+        char[] wasd = "WASD".ToCharArray();
+        var pathNodes = new Stack<string>();
+        var visitedNodes = new List<int>();
+        var yChange = new int[] { -1, 0, 1, 0 };
+        var xChange = new int[] { 0, -1, 0, 1 };
+        int algX = xCoord;
+        int algY = yCoord;
+        int count = 0;
 
-    private string GenerateSolution() {
-        return string.Empty;
+        yield return null;
+        visitedNodes.Add(7 * algY + algX);
+        pathNodes.Push(Map[algY, algX]);
+
+        while (algY != goalY || algX != goalX) {
+            // Attempt to alleviate potential lagspikes.
+            if (count > 100) {
+                count = 0;
+                yield return new WaitForSeconds(0.1f);
+            }
+
+            string currentNode = pathNodes.Peek();
+            if (currentNode == string.Empty) {
+                // Move back from dead end.
+                pathNodes.Pop();
+                int index = Array.IndexOf(wasd, pathDirections[0]);
+                visitedNodes.Remove(7 * algY + algX);
+                algY -= yChange[index];
+                algX -= xChange[index];
+                pathDirections = pathDirections.Remove(0, 1);
+            }
+            else {
+                // Travel to new cell.
+                int finalIndex = Array.IndexOf(wasd, currentNode[0]);
+                int finalDistance = Math.Abs(algX + xChange[finalIndex] - goalX) + Math.Abs(algY + yChange[finalIndex] - goalY);
+                foreach (char letter in currentNode) {
+                    int index = Array.IndexOf(wasd, letter);
+                    int distance = Math.Abs(algX + xChange[index] - goalX) + Math.Abs(algY + yChange[index] - goalY);
+                    if (distance < finalDistance) {
+                        finalIndex = index;
+                        finalDistance = distance;
+                    }
+                }
+
+                algY += yChange[finalIndex];
+                algX += xChange[finalIndex];
+
+                pathNodes.Push(pathNodes.Pop().Remove(0, 1));
+                if (visitedNodes.Contains(7 * algY + algX)) {
+                    algY -= yChange[finalIndex];
+                    algX -= xChange[finalIndex];
+                }
+                else {
+                    visitedNodes.Add(7 * algY + algX);
+                    pathDirections = pathDirections.Insert(0, wasd[finalIndex].ToString());
+                    pathNodes.Push(Map[algY, algX].Replace(wasd[(finalIndex + 2) % 4].ToString(), ""));
+                }
+            }
+        }
+        var solution = new string(pathDirections.Reverse().ToArray());
+        yield return ProcessTwitchCommand(solution);
     }
 }
