@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using UnityEngine;
 using KModkit;
+using UnityEngine;
 using Rnd = UnityEngine.Random;
 
 public class WasdModule : MonoBehaviour
@@ -29,6 +29,7 @@ public class WasdModule : MonoBehaviour
                                      { "W", "D", "WAD", "A", "WD", "AD", "WA" } };
 
     int xCoord, yCoord;
+    int goalX, goalY;
 
     static int ModuleIdCounter = 1;
     int ModuleId;
@@ -53,9 +54,7 @@ public class WasdModule : MonoBehaviour
 
         if (ModuleSolved)
             return;
-        {
 
-        }
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Button.transform);
         if (Button.name.Equals("wButton"))
         {
@@ -106,19 +105,17 @@ public class WasdModule : MonoBehaviour
         generatedLocationIndex = Rnd.Range(0, Locations.Length);
         if (generatedLocationIndex == startingLocationIndex)
         {
-            int seed = Rnd.Range(-3, 4);
-            generatedLocationIndex += seed;
+            generatedLocationIndex += Rnd.Range(1, 9);
+            generatedLocationIndex %= 9;
         }
         DisplayTexts[0].text = Locations[generatedLocationIndex]; //random location
 
         xCoord = (startingLocationIndex % 3) * 3;
         yCoord = (startingLocationIndex / 3) * 3;
+        goalX = (generatedLocationIndex % 3) * 3;
+        goalY = (generatedLocationIndex / 3) * 3;
 
         Debug.LogFormat("[WASD #{0}] The displayed location is {1} and the starting location is {2}.", ModuleId, DisplayTexts[0].text, startingLocationIndex + 1);
-    }
-    void Calculation()
-    {
-
     }
 
     bool checkGoal()
@@ -133,9 +130,6 @@ public class WasdModule : MonoBehaviour
 
         if (yCoord % 3 != 0 || xCoord % 3 != 0)
             return false;
-        int goalX, goalY;
-        goalX = (generatedLocationIndex % 3) * 3;
-        goalY = (generatedLocationIndex / 3) * 3;
         if (xCoord == goalX && yCoord == goalY)
             return true;
         return false;
@@ -153,8 +147,79 @@ public class WasdModule : MonoBehaviour
 
     }
 
-    void Update()
-    {
+#pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"Use '!{0} <W/A/S/D>' to press that button; Chain presses without or without spaces.";
+#pragma warning restore 414
 
+    private WaitForSeconds _tpInterval = new WaitForSeconds(.1f);
+
+    private IEnumerator ProcessTwitchCommand(string command) {
+        command = command.Trim().ToUpperInvariant();
+
+        var match = Regex.Match(command, "[WASD ]+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (match.Success) {
+            yield return null;
+            foreach (char c in command) {
+                if (char.IsWhiteSpace(c))
+                    continue;
+                Buttons["WASD".IndexOf(c)].OnInteract();
+                yield return _tpInterval;
+            }
+        }
+        yield return "sendtochaterror That command was invalid!";
+    }
+
+    private IEnumerator TwitchHandleForcedSolve() {
+        // Breadth-First Search, starting from the goal and working towards the current location.
+        var pathGrid = new char[7, 7];
+        var directionVectors = new Dictionary<char, Vector2Int> {
+            { 'W', new Vector2Int(0, -1) },
+            { 'A', Vector2Int.left },
+            { 'S', new Vector2Int(0, 1) },
+            { 'D', Vector2Int.right }
+        };
+        var visitedCells = new List<Vector2Int>();
+        var currentIteration = new List<Vector2Int>();
+        var currentCell = new Vector2Int(xCoord, yCoord);
+
+        pathGrid[goalY, goalX] = 'G';
+        visitedCells.Add(new Vector2Int(goalX, goalY));
+        currentIteration.Add(new Vector2Int(goalX, goalY));
+
+        while (!visitedCells.Contains(currentCell) || !currentIteration.Any()) {
+            var newIteration = new List<Vector2Int>();
+            foreach (Vector2Int cell in currentIteration) {
+                foreach (char dir in Map[cell.y, cell.x]) {
+                    Vector2Int newCell = cell + directionVectors[dir];
+                    if (!visitedCells.Contains(newCell)) {
+                        newIteration.Add(newCell);
+                        pathGrid[newCell.y, newCell.x] = dir;
+                        visitedCells.Add(newCell);
+                    }
+                }
+            }
+            currentIteration = newIteration;
+        }
+        if (!visitedCells.Contains(currentCell)) {
+            yield return "sendtochat The WASD autosolver was not able to find a path to the goal from the current position. Please report this to ku.ro on Discord.";
+            GetComponent<KMBombModule>().HandlePass();
+            yield break;
+        }
+
+        var solution = string.Empty;
+        var swaps = new Dictionary<char, char> {
+            { 'W', 'S' },
+            { 'A', 'D' },
+            { 'S', 'W' },
+            { 'D', 'A' }
+        };
+        char currentValue = pathGrid[currentCell.y, currentCell.x];
+        while (currentValue != 'G') {
+            char dir = swaps[currentValue];
+            solution += dir;
+            currentCell += directionVectors[dir];
+            currentValue = pathGrid[currentCell.y, currentCell.x];
+        }
+        yield return ProcessTwitchCommand(solution);
     }
 }
