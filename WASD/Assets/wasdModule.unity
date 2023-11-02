@@ -976,6 +976,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
+<<<<<<< Updated upstream
   m_Size: {x: 0.01763416, y: 0.01753315, z: 0.007680042}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!33 &1298243663
@@ -2261,3 +2262,43 @@ MeshFilter:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 2080443634}
   m_Mesh: {fileID: 4300104, guid: 9678e2a8f94167d46a53772bffc9d4cb, type: 3}
+=======
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4946070013113268, guid: e96942615dd348a42987195e5ea8a74c, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946070013113268, guid: e96942615dd348a42987195e5ea8a74c, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946070013113268, guid: e96942615dd348a42987195e5ea8a74c, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946070013113268, guid: e96942615dd348a42987195e5ea8a74c, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946070013113268, guid: e96942615dd348a42987195e5ea8a74c, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946070013113268, guid: e96942615dd348a42987195e5ea8a74c, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946070013113268, guid: e96942615dd348a42987195e5ea8a74c, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946070013113268, guid: e96942615dd348a42987195e5ea8a74c, type: 2}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: e96942615dd348a42987195e5ea8a74c, type: 2}
+  m_IsPrefabParent: 0
+>>>>>>> Stashed changes
