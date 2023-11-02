@@ -24,8 +24,8 @@ MonoBehaviour:
     Thanks to everyone who helped me in the KTaNE Discord mod-creation channel :)
 
 
-    To report a bug, DM me at igster!#6242 on Discord or ping me in mod-bug-reports
-    on the KTaNE Discord server.'
+    To report a bug, DM me @plut0manga on Discord or ping me in mod-bug-reports on
+    the KTaNE Discord server.'
   version: 
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 376a02d5b386431458b0111f2459523e, type: 3}
