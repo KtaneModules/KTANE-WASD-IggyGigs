@@ -148,86 +148,78 @@ public class WasdModule : MonoBehaviour
     }
 
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"Use '!{0} <W/A/S/D>' to press that button; Chain presses without spaces.";
+    private readonly string TwitchHelpMessage = @"Use '!{0} <W/A/S/D>' to press that button; Chain presses without or without spaces.";
 #pragma warning restore 414
 
-    private char[] _directions = new char[] { 'W', 'A', 'S', 'D' };
+    private WaitForSeconds _tpInterval = new WaitForSeconds(.1f);
 
     private IEnumerator ProcessTwitchCommand(string command) {
-        command = command.Trim().ToUpper();
+        command = command.Trim().ToUpperInvariant();
 
-        if (command.Any(letter => !_directions.Contains(letter))) {
-            yield return "sendtochaterror Invalid command!";
+        var match = Regex.Match(command, "[WASD ]+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (match.Success) {
+            yield return null;
+            foreach (char c in command) {
+                if (char.IsWhiteSpace(c))
+                    continue;
+                Buttons["WASD".IndexOf(c)].OnInteract();
+                yield return _tpInterval;
+            }
         }
-        yield return null;
-
-        foreach (char letter in command) {
-            Buttons[Array.IndexOf(_directions, letter)].OnInteract();
-            yield return new WaitForSeconds(0.1f);
-        }
+        yield return "sendtochaterror That command was invalid!";
     }
 
     private IEnumerator TwitchHandleForcedSolve() {
-        string pathDirections = string.Empty;
-        char[] wasd = "WASD".ToCharArray();
-        var pathNodes = new Stack<string>();
-        var visitedNodes = new List<int>();
-        var yChange = new int[] { -1, 0, 1, 0 };
-        var xChange = new int[] { 0, -1, 0, 1 };
-        int algX = xCoord;
-        int algY = yCoord;
-        int count = 0;
+        // Breadth-First Search, starting from the goal and working towards the current location.
+        var pathGrid = new char[7, 7];
+        var directionVectors = new Dictionary<char, Vector2Int> {
+            { 'W', new Vector2Int(0, -1) },
+            { 'A', Vector2Int.left },
+            { 'S', new Vector2Int(0, 1) },
+            { 'D', Vector2Int.right }
+        };
+        var visitedCells = new List<Vector2Int>();
+        var currentIteration = new List<Vector2Int>();
+        var currentCell = new Vector2Int(xCoord, yCoord);
 
-        yield return null;
-        visitedNodes.Add(7 * algY + algX);
-        pathNodes.Push(Map[algY, algX]);
+        pathGrid[goalY, goalX] = 'G';
+        visitedCells.Add(new Vector2Int(goalX, goalY));
+        currentIteration.Add(new Vector2Int(goalX, goalY));
 
-        while (algY != goalY || algX != goalX) {
-            // Attempt to alleviate potential lagspikes.
-            if (count > 100) {
-                count = 0;
-                yield return new WaitForSeconds(0.1f);
-            }
-
-            string currentNode = pathNodes.Peek();
-            if (currentNode == string.Empty) {
-                // Move back from dead end.
-                pathNodes.Pop();
-                int index = Array.IndexOf(wasd, pathDirections[0]);
-                visitedNodes.Remove(7 * algY + algX);
-                algY -= yChange[index];
-                algX -= xChange[index];
-                pathDirections = pathDirections.Remove(0, 1);
-            }
-            else {
-                // Travel to new cell.
-                int finalIndex = Array.IndexOf(wasd, currentNode[0]);
-                int finalDistance = Math.Abs(algX + xChange[finalIndex] - goalX) + Math.Abs(algY + yChange[finalIndex] - goalY);
-                foreach (char letter in currentNode) {
-                    int index = Array.IndexOf(wasd, letter);
-                    int distance = Math.Abs(algX + xChange[index] - goalX) + Math.Abs(algY + yChange[index] - goalY);
-                    if (distance < finalDistance) {
-                        finalIndex = index;
-                        finalDistance = distance;
+        while (!visitedCells.Contains(currentCell) || !currentIteration.Any()) {
+            var newIteration = new List<Vector2Int>();
+            foreach (Vector2Int cell in currentIteration) {
+                foreach (char dir in Map[cell.y, cell.x]) {
+                    Vector2Int newCell = cell + directionVectors[dir];
+                    if (!visitedCells.Contains(newCell)) {
+                        newIteration.Add(newCell);
+                        pathGrid[newCell.y, newCell.x] = dir;
+                        visitedCells.Add(newCell);
                     }
                 }
-
-                algY += yChange[finalIndex];
-                algX += xChange[finalIndex];
-
-                pathNodes.Push(pathNodes.Pop().Remove(0, 1));
-                if (visitedNodes.Contains(7 * algY + algX)) {
-                    algY -= yChange[finalIndex];
-                    algX -= xChange[finalIndex];
-                }
-                else {
-                    visitedNodes.Add(7 * algY + algX);
-                    pathDirections = pathDirections.Insert(0, wasd[finalIndex].ToString());
-                    pathNodes.Push(Map[algY, algX].Replace(wasd[(finalIndex + 2) % 4].ToString(), ""));
-                }
             }
+            currentIteration = newIteration;
         }
-        var solution = new string(pathDirections.Reverse().ToArray());
+        if (!visitedCells.Contains(currentCell)) {
+            yield return "sendtochat The WASD autosolver was not able to find a path to the goal from the current position. Please report this to ku.ro on Discord.";
+            GetComponent<KMBombModule>().HandlePass();
+            yield break;
+        }
+
+        var solution = string.Empty;
+        var swaps = new Dictionary<char, char> {
+            { 'W', 'S' },
+            { 'A', 'D' },
+            { 'S', 'W' },
+            { 'D', 'A' }
+        };
+        char currentValue = pathGrid[currentCell.y, currentCell.x];
+        while (currentValue != 'G') {
+            char dir = swaps[currentValue];
+            solution += dir;
+            currentCell += directionVectors[dir];
+            currentValue = pathGrid[currentCell.y, currentCell.x];
+        }
         yield return ProcessTwitchCommand(solution);
     }
 }
