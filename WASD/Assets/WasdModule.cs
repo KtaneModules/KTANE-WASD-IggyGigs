@@ -156,7 +156,7 @@ public class WasdModule : MonoBehaviour
     private IEnumerator ProcessTwitchCommand(string command) {
         command = command.Trim().ToUpperInvariant();
 
-        var match = Regex.Match(command, "[WASD ]+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var match = Regex.Match(command, @"^[WASD ]+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (match.Success) {
             yield return null;
             foreach (char c in command) {
